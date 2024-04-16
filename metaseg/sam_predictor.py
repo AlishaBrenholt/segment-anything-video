@@ -1,4 +1,5 @@
 from typing import Union
+import os
 
 import cv2
 import numpy as np
@@ -18,6 +19,8 @@ from metaseg.utils import (
     multi_boxes,
     show_image,
 )
+
+import PIL
 
 
 class SegAutoMaskPredictor:
@@ -109,11 +112,41 @@ class SegAutoMaskPredictor:
                 min_mask_region_area=min_area,
             )
             masks = mask_generator.generate(frame)
+            sorted_anns = sorted(masks, key=(lambda x: x["area"]), reverse=True)
+            masks = sorted_anns
+############################################### Alisha Code ##############################################
+            # Make directory to put images
+            path = os.getcwd()
+            if not os.path.exists(f"{path}/gen_ai_fml/frame_{_}"):
+                os.makedirs(f"{path}/gen_ai_fml/frame_{_}")
+            else:
+                # We had directory, but now we need to delete the files in it
+                with os.scandir(f"{path}/gen_ai_fml/frame_{_}") as entries:
+                    for entry in entries:
+                        os.unlink(entry.path)
+                    print(f"Deleted files in {path}/gen_ai_fml/frame_{_}")
+
+            try:
+                print("Frame {}".format(_))
+                print(f"Masks' structure: {len(masks)} X {len(masks[0]['segmentation'])} X {len(masks[0]['segmentation'][0])}")
+                for index,mask in enumerate(masks):
+
+
+
+
+                    # Make image from the true false mask
+                    pillow_image = PIL.Image.fromarray(mask['segmentation'])
+                    # save it
+                    pillow_image.save(f"./gen_ai_fml/frame_{_}/mask_{index}.png")
+
+            except:
+                print(f"No mask found in frame {_}")
+##############################################  Alisha end  ##############################################
 
             if len(masks) == 0:
                 continue
 
-            sorted_anns = sorted(masks, key=(lambda x: x["area"]), reverse=True)
+
             mask_image = np.zeros(
                 (
                     masks[0]["segmentation"].shape[0],
